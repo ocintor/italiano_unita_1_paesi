@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌍 Borsa delle Nazionalità Italiane</title>
+<style>
+/* ===== Basis: Videospiel-Look (dunkles Weltraum-/Weltkarten-Thema) ===== */
+:root{--bg:#0b1026;--glass:rgba(17,24,52,.75);--line:rgba(125,211,252,.35);--cy:#22d3ee;--gold:#fbbf24;--pk:#f472b6;--ink:#1f2937;--ok:#4ade80;--ko:#f87171;--r:18px}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",Verdana,sans-serif;color:#e5e7eb;min-height:100vh;
+ background:radial-gradient(1100px 600px at 85% -10%,rgba(124,58,237,.55),transparent),radial-gradient(900px 500px at -10% 100%,rgba(14,116,144,.6),transparent),var(--bg) fixed}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(circle,rgba(255,255,255,.1) 1.2px,transparent 1.6px) 0 0/24px 24px;pointer-events:none}
+.wrap{position:relative;max-width:1200px;margin:auto;padding:16px}
+h2{margin:26px 0 10px;color:#fff;letter-spacing:1px;text-transform:uppercase;font-size:1.1rem;text-shadow:0 0 12px var(--cy)}
+.panel{background:var(--glass);border:2px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 0 24px rgba(34,211,238,.12),0 10px 24px rgba(0,0,0,.4);backdrop-filter:blur(6px)}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;font-weight:800;background:linear-gradient(180deg,#fde68a,var(--gold));color:var(--ink);box-shadow:0 4px 0 #b7791f;transition:transform .1s}
+button:hover{transform:translateY(-2px)}button:active{transform:translateY(2px);box-shadow:0 1px 0 #b7791f}
+input,select{font:inherit;padding:12px;border-radius:14px;border:2px solid var(--line);width:100%;background:#0b1026;color:#fff}
+input::placeholder{color:#94a3b8}
+/* ===== HUD (Kopfleiste) ===== */
+.hud{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--glass);border:2px solid var(--line);border-radius:22px;box-shadow:0 0 30px rgba(34,211,238,.2)}
+.logo{display:flex;align-items:center;gap:12px}.gl{font-size:3rem;animation:bob 3s ease-in-out infinite}
+h1{margin:0;font-size:clamp(1.3rem,3.2vw,2.2rem);background:linear-gradient(90deg,#fff,var(--cy),var(--pk));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lvl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lvl b{background:linear-gradient(135deg,var(--pk),#7c3aed);padding:8px 14px;border-radius:12px;box-shadow:0 0 14px var(--pk)}
+.xp{width:220px;height:16px;border-radius:9px;background:#0b1026;border:2px solid var(--line);overflow:hidden}
+.xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--pk));transition:width .6s}
+/* ===== Dashboard ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.stat{background:var(--glass);border:2px solid var(--line);border-radius:var(--r);padding:12px;text-align:center}
+.stat b{display:block;font-size:1.7rem;color:var(--gold);text-shadow:0 0 10px rgba(251,191,36,.6)}.stat span{font-size:.8rem;color:#cbd5e1}
+/* ===== Hauptmenü-Kacheln ===== */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:18px}
+.tile{--c1:#06b6d4;--c2:#1d4ed8;display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 14px;font-size:1.6rem;border-radius:24px;color:#fff;background:linear-gradient(160deg,var(--c1),var(--c2));box-shadow:0 8px 0 rgba(0,0,0,.4),0 0 28px var(--c1)}
+.tile:nth-child(2){--c1:#ec4899;--c2:#7c3aed}.tile:nth-child(3){--c1:#10b981;--c2:#0f766e}
+.tile i{font-style:normal;font-size:3.8rem;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}.tile span{font-size:.95rem;font-weight:400}
+.tile:hover{transform:translateY(-5px) scale(1.02)}
+.nav{margin-bottom:12px;background:rgba(255,255,255,.1);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.4)}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.modes button{font-size:1.1rem;padding:18px}
+/* ===== Spielbereich ===== */
+#play{display:none;margin-top:16px;text-align:center}
+#play .flagbig{font-size:5rem;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+#play h3{font-size:1.6rem;margin:6px 0 14px;color:#fff}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.opts button{background:rgba(255,255,255,.08);color:#fff;border:2px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.45);font-size:1.2rem}
+.opts button:hover{border-color:var(--cy);box-shadow:0 4px 0 rgba(0,0,0,.45),0 0 16px var(--cy)}
+.opts button.ok{background:#166534;border-color:var(--ok)}.opts button.ko{background:#7f1d1d;border-color:var(--ko)}
+.fb{font-size:1.6rem;font-weight:800;min-height:2.2rem;margin-top:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+/* ===== Zuordnen ===== */
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.match button{background:rgba(255,255,255,.08);color:#fff;border:2px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.45);font-size:1.1rem}
+.match button.sel{border-color:var(--gold);box-shadow:0 0 18px var(--gold)}
+.match button.ok{background:#166534;border-color:var(--ok);opacity:.75;cursor:default}
+.match button.ko{background:#7f1d1d;border-color:var(--ko);animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* ===== Abzeichen ===== */
+.badges{display:flex;gap:12px;flex-wrap:wrap}
+.badge{flex:1;min-width:140px;text-align:center;background:var(--glass);border:2px solid var(--line);border-radius:var(--r);padding:12px;filter:grayscale(1);opacity:.45}
+.badge.on{filter:none;opacity:1;animation:bob 2s infinite;border-color:var(--gold);box-shadow:0 0 22px var(--gold)}
+.badge i{font-style:normal;font-size:2.4rem;display:block}
+@keyframes bob{50%{transform:translateY(-6px) rotate(2deg)}}
+/* ===== Sammelkarten (3D-Flip: KEIN filter auf .inner/.face!) ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px;margin-top:14px}
+.card{perspective:900px;height:270px;cursor:pointer}
+.inner{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+.card.flipped .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);padding:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:4px;color:var(--ink);border:5px solid var(--bd,#9ca3af);background:linear-gradient(160deg,#fff,var(--bgc,#f3f4f6));box-shadow:0 8px 16px rgba(0,0,0,.5),0 0 14px var(--glow,transparent)}
+.front{transform:rotateY(0deg)}
+.back{transform:rotateY(180deg);background:linear-gradient(160deg,#1e1b4b,#312e81);color:#fff}.back b{color:var(--gold)}
+.face .flag{font-size:3.6rem;line-height:1}.face h3{margin:2px 0;font-size:1.15rem;text-transform:uppercase;letter-spacing:1px}
+.face p{margin:0}.rar{font-size:.8rem;font-weight:800}
+.r0{--bd:#9ca3af;--bgc:#f3f4f6}.r1{--bd:#3b82f6;--bgc:#dbeafe;--glow:#3b82f6}.r2{--bd:#a855f7;--bgc:#f3e8ff;--glow:#a855f7}
+.r3{--bd:#f59e0b;--bgc:#fef3c7;--glow:#fbbf24}.r3 .front{animation:shine 2.5s infinite}
+@keyframes shine{50%{box-shadow:0 0 26px 6px #fbbf24}}
+.card:hover .inner{outline:3px solid rgba(34,211,238,.8);outline-offset:3px;border-radius:var(--r)}
+.card.locked .front{background:linear-gradient(160deg,#334155,#1e293b);color:#94a3b8;border-color:#475569;box-shadow:none}
+.card.locked .front .flag{filter:grayscale(1);opacity:.6}.lk{position:absolute;top:6px;right:8px;font-style:normal}
+/* ===== Modal & Toast ===== */
+#modal{position:fixed;inset:0;background:rgba(3,7,18,.85);display:none;place-items:center;z-index:9}
+#modal.show{display:grid}
+#modal .box{text-align:center;color:#fff;animation:pop .6s}
+#modal .card{width:220px;margin:14px auto}
+@keyframes pop{from{transform:scale(.2) rotate(-20deg);opacity:0}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--ink);padding:14px 22px;border-radius:30px;font-weight:800;display:none;z-index:10;box-shadow:0 0 24px var(--gold)}
+.hide{display:none!important}
+@media(max-width:600px){.card{height:250px}.xp{width:140px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hud">
+  <div class="logo"><span class="gl">🌍</span><div><h1>Borsa delle Nazionalità Italiane</h1><small>🧭 Missione: colleziona tutto il mondo!</small></div></div>
+  <div class="lvl"><b id="lv">LV 1</b><div class="xp"><i id="xpb"></i></div><small id="xpt">0 / 50 XP</small></div>
+</header>
+
+<!-- Dashboard -->
+<div class="stats" id="stats"></div>
+
+<!-- Drei Hauptkacheln -->
+<div class="tiles">
+  <button class="tile" data-s="search"><i>🔍</i><b>Cerca</b><span>Suche</span></button>
+  <button class="tile" data-s="quiz"><i>🎮</i><b>Quiz</b><span>Spielen &amp; Karten gewinnen</span></button>
+  <button class="tile" data-s="learn"><i>✍️</i><b>Imparare</b><span>Lernen &amp; üben</span></button>
+</div>
+
+<!-- Bereich: Quiz -->
+<section class="sec hide" id="s-quiz">
+  <button class="nav" data-s="">⬅ Home</button>
+  <div class="modes">
+    <button data-m="quiz">🎮 Quiz starten</button>
+    <button data-m="flags">🎯 Cacciatore di bandiere</button>
+  </div>
+</section>
+
+<!-- Bereich: Lernen -->
+<section class="sec hide" id="s-learn">
+  <button class="nav" data-s="">⬅ Home</button>
+  <div class="modes">
+    <button data-m="match">🔗 Abbina paese e nazionalità</button>
+    <button data-m="pick3">🎯 Quale nazionalità? (3 risposte)</button>
+    <button data-m="trainer">✍️ Allenatore delle nazionalità</button>
+    <button data-m="gender">👦 👧 Femminile o Maschile</button>
+  </div>
+</section>
+
+<div class="panel" id="play"></div>
+
+<!-- Startseite: Tageskarte & Abzeichen -->
+<div id="home">
+<h2>⭐ Carta del giorno</h2>
+<div id="daily" style="max-width:230px"></div>
+<h2>🏅 Abzeichen</h2>
+<div class="badges" id="badges"></div>
+</div>
+
+<!-- Bereich: Suche / Album -->
+<section class="sec hide" id="s-search">
+<button class="nav" data-s="">⬅ Home</button>
+<h2>📒 Il mio album</h2>
+<div class="panel">
+  <div class="row">
+    <div style="flex:3"><label for="q"><b>🔍 Cerca un paese o una nazionalità</b></label>
+    <input id="q" type="search" placeholder="Swiss, Schweizerin, Svizzera, USA …" autocomplete="off"></div>
+    <div><label for="f"><b>🌍 Filtro</b></label>
+    <select id="f"><option value="">Tutti / Alle</option><option value="*owned">✅ Raccolte</option><option value="*new">🔒 Da trovare</option></select></div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p style="text-align:center"><button id="reset">🗑️ Ricomincia</button></p>
+</div>
+</section>
+</div>
+
+<div id="modal"><div class="box"><h2>🎉 Nuova carta trovata!</h2><div id="mcard"></div><button id="mok">Continua ➜</button></div></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   DATENBANK  (it|de|en|nazionalità maschile IT|Nationalität DE (m/w)|flag|continente|alias)
+   Italienische weibliche Form: -o → -a, sonst gleich. Deutsche weibliche Form: +in (oder explizit mit "/").
+   ============================================================ */
+const RAW=`Italia|Italien|Italy|italiano|Italiener|🇮🇹|Europa
+Svizzera|Schweiz|Switzerland|svizzero|Schweizer|🇨🇭|Europa|swiss
+Germania|Deutschland|Germany|tedesco|Deutscher/Deutsche|🇩🇪|Europa|german
+Francia|Frankreich|France|francese|Franzose/Französin|🇫🇷|Europa|french
+Spagna|Spanien|Spain|spagnolo|Spanier|🇪🇸|Europa|spanish
+Portogallo|Portugal|Portugal|portoghese|Portugiese/Portugiesin|🇵🇹|Europa
+Austria|Österreich|Austria|austriaco|Österreicher|🇦🇹|Europa
+Liechtenstein|Liechtenstein|Liechtenstein|liechtensteinese|Liechtensteiner|🇱🇮|Europa
+Paesi Bassi|Niederlande|Netherlands|olandese|Niederländer|🇳🇱|Europa|holland,dutch,olanda
+Belgio|Belgien|Belgium|belga|Belgier|🇧🇪|Europa
+Lussemburgo|Luxemburg|Luxembourg|lussemburghese|Luxemburger|🇱🇺|Europa
+Regno Unito|Vereinigtes Königreich|United Kingdom|britannico|Brite/Britin|🇬🇧|Europa|england,british,uk,inglese,engländer
+Irlanda|Irland|Ireland|irlandese|Ire/Irin|🇮🇪|Europa|irish
+Svezia|Schweden|Sweden|svedese|Schwede/Schwedin|🇸🇪|Europa|swedish
+Norvegia|Norwegen|Norway|norvegese|Norweger|🇳🇴|Europa
+Danimarca|Dänemark|Denmark|danese|Däne/Dänin|🇩🇰|Europa|danish
+Finlandia|Finnland|Finland|finlandese|Finne/Finnin|🇫🇮|Europa
+Islanda|Island|Iceland|islandese|Isländer|🇮🇸|Europa
+Polonia|Polen|Poland|polacco|Pole/Polin|🇵🇱|Europa|polish
+Cechia|Tschechien|Czechia|ceco|Tscheche/Tschechin|🇨🇿|Europa|czech
+Slovacchia|Slowakei|Slovakia|slovacco|Slowake/Slowakin|🇸🇰|Europa
+Ungheria|Ungarn|Hungary|ungherese|Ungar|🇭🇺|Europa|hungarian
+Slovenia|Slowenien|Slovenia|sloveno|Slowene/Slowenin|🇸🇮|Europa
+Croazia|Kroatien|Croatia|croato|Kroate/Kroatin|🇭🇷|Europa
+Serbia|Serbien|Serbia|serbo|Serbe/Serbin|🇷🇸|Europa
+Bosnia ed Erzegovina|Bosnien und Herzegowina|Bosnia and Herzegovina|bosniaco|Bosnier|🇧🇦|Europa|bosnia
+Kosovo|Kosovo|Kosovo|kosovaro|Kosovare/Kosovarin|🇽🇰|Europa
+Albania|Albanien|Albania|albanese|Albaner|🇦🇱|Europa
+Grecia|Griechenland|Greece|greco|Grieche/Griechin|🇬🇷|Europa|greek
+Bulgaria|Bulgarien|Bulgaria|bulgaro|Bulgare/Bulgarin|🇧🇬|Europa
+Romania|Rumänien|Romania|rumeno|Rumäne/Rumänin|🇷🇴|Europa
+Ucraina|Ukraine|Ukraine|ucraino|Ukrainer|🇺🇦|Europa
+Russia|Russland|Russia|russo|Russe/Russin|🇷🇺|Europa
+Bielorussia|Belarus|Belarus|bielorusso|Belarusse/Belarussin|🇧🇾|Europa
+Lituania|Litauen|Lithuania|lituano|Litauer|🇱🇹|Europa
+Lettonia|Lettland|Latvia|lettone|Lette/Lettin|🇱🇻|Europa
+Estonia|Estland|Estonia|estone|Este/Estin|🇪🇪|Europa
+Turchia|Türkei|Turkey|turco|Türke/Türkin|🇹🇷|Asien|turkish
+Siria|Syrien|Syria|siriano|Syrer|🇸🇾|Asien
+Iran|Iran|Iran|iraniano|Iraner|🇮🇷|Asien
+Iraq|Irak|Iraq|iracheno|Iraker|🇮🇶|Asien
+Israele|Israel|Israel|israeliano|Israeli/Israeli|🇮🇱|Asien
+Libano|Libanon|Lebanon|libanese|Libanese/Libanesin|🇱🇧|Asien
+Arabia Saudita|Saudi-Arabien|Saudi Arabia|saudita|Saudi-Araber|🇸🇦|Asien
+Emirati Arabi Uniti|Vereinigte Arabische Emirate|United Arab Emirates|emiratino|Emirater|🇦🇪|Asien|uae,dubai
+Giordania|Jordanien|Jordan|giordano|Jordanier|🇯🇴|Asien
+Afghanistan|Afghanistan|Afghanistan|afghano|Afghane/Afghanin|🇦🇫|Asien
+Pakistan|Pakistan|Pakistan|pakistano|Pakistaner|🇵🇰|Asien
+India|Indien|India|indiano|Inder|🇮🇳|Asien|indian
+Bangladesh|Bangladesch|Bangladesh|bengalese|Bangladescher|🇧🇩|Asien
+Sri Lanka|Sri Lanka|Sri Lanka|singalese|Sri-Lanker|🇱🇰|Asien|srilankese
+Nepal|Nepal|Nepal|nepalese|Nepalese/Nepalesin|🇳🇵|Asien
+Cina|China|China|cinese|Chinese/Chinesin|🇨🇳|Asien|chinese
+Giappone|Japan|Japan|giapponese|Japaner|🇯🇵|Asien|japanese
+Corea del Sud|Südkorea|South Korea|sudcoreano|Südkoreaner|🇰🇷|Asien|korea,korean
+Corea del Nord|Nordkorea|North Korea|nordcoreano|Nordkoreaner|🇰🇵|Asien
+Thailandia|Thailand|Thailand|thailandese|Thailänder|🇹🇭|Asien|thai
+Vietnam|Vietnam|Vietnam|vietnamita|Vietnamese/Vietnamesin|🇻🇳|Asien
+Cambogia|Kambodscha|Cambodia|cambogiano|Kambodschaner|🇰🇭|Asien
+Malesia|Malaysia|Malaysia|malese|Malaysier|🇲🇾|Asien
+Singapore|Singapur|Singapore|singaporiano|Singapurer|🇸🇬|Asien
+Indonesia|Indonesien|Indonesia|indonesiano|Indonesier|🇮🇩|Asien
+Filippine|Philippinen|Philippines|filippino|Philippine/Philippinin|🇵🇭|Asien
+Kazakistan|Kasachstan|Kazakhstan|kazako|Kasache/Kasachin|🇰🇿|Asien
+Georgia|Georgien|Georgia|georgiano|Georgier|🇬🇪|Asien
+Egitto|Ägypten|Egypt|egiziano|Ägypter|🇪🇬|Afrika|egyptian
+Nigeria|Nigeria|Nigeria|nigeriano|Nigerianer|🇳🇬|Afrika
+Marocco|Marokko|Morocco|marocchino|Marokkaner|🇲🇦|Afrika
+Algeria|Algerien|Algeria|algerino|Algerier|🇩🇿|Afrika
+Tunisia|Tunesien|Tunisia|tunisino|Tunesier|🇹🇳|Afrika
+Libia|Libyen|Libya|libico|Libyer|🇱🇾|Afrika
+Etiopia|Äthiopien|Ethiopia|etiope|Äthiopier|🇪🇹|Afrika
+Somalia|Somalia|Somalia|somalo|Somalier|🇸🇴|Afrika
+Kenya|Kenia|Kenya|keniano|Kenianer|🇰🇪|Afrika
+Tanzania|Tansania|Tanzania|tanzaniano|Tansanier|🇹🇿|Afrika
+Ghana|Ghana|Ghana|ghanese|Ghanaer|🇬🇭|Afrika
+Senegal|Senegal|Senegal|senegalese|Senegalese/Senegalesin|🇸🇳|Afrika
+Camerun|Kamerun|Cameroon|camerunese|Kameruner|🇨🇲|Afrika
+Costa d'Avorio|Elfenbeinküste|Ivory Coast|ivoriano|Ivorer|🇨🇮|Afrika
+Sudafrica|Südafrika|South Africa|sudafricano|Südafrikaner|🇿🇦|Afrika
+Angola|Angola|Angola|angolano|Angolaner|🇦🇴|Afrika
+Stati Uniti|Vereinigte Staaten|United States|americano|Amerikaner|🇺🇸|Nordamerika|usa,american,statunitense,america
+Canada|Kanada|Canada|canadese|Kanadier|🇨🇦|Nordamerika|canadian
+Messico|Mexiko|Mexico|messicano|Mexikaner|🇲🇽|Nordamerika|mexican
+Cuba|Kuba|Cuba|cubano|Kubaner|🇨🇺|Nordamerika
+Giamaica|Jamaika|Jamaica|giamaicano|Jamaikaner|🇯🇲|Nordamerika
+Repubblica Dominicana|Dominikanische Republik|Dominican Republic|dominicano|Dominikaner|🇩🇴|Nordamerika
+Costa Rica|Costa Rica|Costa Rica|costaricano|Costa-Ricaner|🇨🇷|Nordamerika
+Panama|Panama|Panama|panamense|Panamaer|🇵🇦|Nordamerika
+Guatemala|Guatemala|Guatemala|guatemalteco|Guatemalteke/Guatemaltekin|🇬🇹|Nordamerika
+Brasile|Brasilien|Brazil|brasiliano|Brasilianer|🇧🇷|Südamerika|brazilian
+Argentina|Argentinien|Argentina|argentino|Argentinier|🇦🇷|Südamerika
+Cile|Chile|Chile|cileno|Chilene/Chilenin|🇨🇱|Südamerika
+Perù|Peru|Peru|peruviano|Peruaner|🇵🇪|Südamerika
+Colombia|Kolumbien|Colombia|colombiano|Kolumbianer|🇨🇴|Südamerika
+Venezuela|Venezuela|Venezuela|venezuelano|Venezolaner|🇻🇪|Südamerika
+Uruguay|Uruguay|Uruguay|uruguaiano|Uruguayer|🇺🇾|Südamerika
+Paraguay|Paraguay|Paraguay|paraguaiano|Paraguayer|🇵🇾|Südamerika
+Bolivia|Bolivien|Bolivia|boliviano|Bolivianer|🇧🇴|Südamerika
+Ecuador|Ecuador|Ecuador|ecuadoriano|Ecuadorianer|🇪🇨|Südamerika
+Australia|Australien|Australia|australiano|Australier|🇦🇺|Ozeanien|australian
+Nuova Zelanda|Neuseeland|New Zealand|neozelandese|Neuseeländer|🇳🇿|Ozeanien`;
+
+const RAR=[{s:"⭐",n:"Comune"},{s:"⭐⭐",n:"Rara"},{s:"⭐⭐⭐",n:"Epica"},{s:"⭐⭐⭐⭐",n:"Leggendaria"}];
+const BADGES=[[10,"🥉","Esploratore"],[25,"🥈","Viaggiatore"],[50,"🥇","Esperto delle nazionalità"],[100,"🏆","Campione mondiale"]];
+
+/* Text normalisieren (Gross/Klein, Akzente) für die Suche */
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+
+/* Rohdaten → Objekte (inkl. automatischer Seltenheit) */
+const C=RAW.split("\n").map((l,id)=>{
+  const [it,de,en,mi,md,flag,continent,al=""]=l.split("|");
+  const [dM,dF]=md.split("/");
+  const fi=mi.endsWith("o")?mi.slice(0,-1)+"a":mi;
+  const c={id,countryItalian:it,countryGerman:de,countryEnglish:en,
+    nationalityMaleItalian:mi,nationalityFemaleItalian:fi,
+    nationalityMaleGerman:dM,nationalityFemaleGerman:dF||dM+"in",flag,continent,
+    searchKeywords:al?al.split(","):[]};
+  let h=0;for(const ch of it)h+=ch.charCodeAt(0);
+  const n=(h*7+id*13)%20;c.rarity=n<10?0:n<15?1:n<18?2:3;
+  c.hay=norm([it,de,en,mi,fi,dM,c.nationalityFemaleGerman,...c.searchKeywords].join(" "));
+  return c;
+});
+
+/* ============================================================
+   SPIELSTAND (localStorage, mit Fallback)
+   ============================================================ */
+let S={owned:[],pts:0,played:0,streak:0,badges:[]};
+try{const x=JSON.parse(localStorage.getItem("bni")||"null");if(x)S=x;}catch(e){}
+const save=()=>{try{localStorage.setItem("bni",JSON.stringify(S));}catch(e){}};
+const $=id=>document.getElementById(id);
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const pick=(a,n)=>shuffle(a).slice(0,n);
+
+/* ============================================================
+   DARSTELLUNG: Karten, Statistik, Abzeichen
+   ============================================================ */
+function cardHTML(c){
+  const own=S.owned.includes(c.id),r=RAR[c.rarity];
+  return `<div class="card r${c.rarity} ${own?"":"locked"}" data-id="${c.id}"><div class="inner">
+  <div class="face front"><span class="rar">${r.s} ${r.n}</span><div class="flag">${c.flag}</div>
+  <h3>${c.countryItalian}</h3><p>👦 ${c.nationalityMaleItalian}</p><p>👧 ${c.nationalityFemaleItalian}</p>
+  <small>🌍 ${c.continent}</small>${own?"":'<i class="lk">🔒</i>'}</div>
+  <div class="face back"><span class="rar">Lösung · Soluzione</span><div class="flag">${c.flag}</div><h3>${c.countryGerman}</h3>
+  <p>👦 <b>${c.nationalityMaleGerman}</b></p><p>👧 <b>${c.nationalityFemaleGerman}</b></p>
+  <small>🌍 ${c.continent}</small><span class="rar">${r.s} ${r.n}</span></div></div></div>`;
+}
+function renderGrid(){
+  const q=norm($("q").value),f=$("f").value;
+  const list=C.filter(c=>(!q||c.hay.includes(q))&&(f!=="*owned"||S.owned.includes(c.id))&&(f!=="*new"||!S.owned.includes(c.id)));
+  $("grid").innerHTML=list.length?list.map(cardHTML).join(""):"<p>😕 Nessun risultato / Nichts gefunden.</p>";
+}
+function renderStats(){
+  $("lv").textContent="LV "+(Math.floor(S.pts/50)+1);$("xpb").style.width=(S.pts%50)*2+"%";$("xpt").textContent=(S.pts%50)+" / 50 XP";
+  const rare=S.owned.filter(i=>C[i].rarity>=1).length;
+  const items=[["📚","Länder gesamt",C.length],["✅","Gesammelte Karten",S.owned.length],["🎮","Quizfragen gespielt",S.played],
+    ["🏆","Gesamtpunkte",S.pts],["🔥","Aktuelle Serie",S.streak],["⭐","Seltene Karten (Rara+)",rare]];
+  $("stats").innerHTML=items.map(([i,l,v])=>`<div class="stat"><b>${i} ${v}</b><span>${l}</span></div>`).join("");
+  $("badges").innerHTML=BADGES.map(([t,i,n])=>`<div class="badge ${S.badges.includes(t)?"on":""}"><i>${i}</i><b>${n}</b><br><small>${t} Punkte</small></div>`).join("");
+}
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2600);}
+function refresh(){save();renderStats();renderGrid();}
+
+/* ============================================================
+   PUNKTE, KARTEN FREISCHALTEN, ABZEICHEN
+   ============================================================ */
+function award(c,done){
+  S.pts+=10;S.streak++;
+  BADGES.forEach(([t,i,n])=>{if(S.pts>=t&&!S.badges.includes(t)){S.badges.push(t);setTimeout(()=>toast(`${i} Nuovo badge: ${n}!`),300);}});
+  if(!S.owned.includes(c.id)){S.owned.push(c.id);refresh();
+    $("mcard").innerHTML=cardHTML(c);$("modal").classList.add("show");$("mok").onclick=()=>{$("modal").classList.remove("show");done();};
+    $("mcard").firstChild.onclick=e=>e.currentTarget.classList.toggle("flipped");
+  }else{refresh();setTimeout(done,1300);}
+}
+
+/* ============================================================
+   SPIELMOTOR: erzeugt Fragen und wertet Antworten aus
+   ============================================================ */
+let mode=null,locked=false;
+const others=c=>C.filter(x=>x.id!==c.id&&x.nationalityMaleItalian!==c.nationalityMaleItalian);
+
+function makeQ(m){
+  if(m==="quiz")m=["q1","q2","q3","q4"][Math.floor(Math.random()*4)];
+  let c,o;
+  if(m==="q4"||m==="gender"){                       // weibliche Form wählen
+    c=shuffle(C.filter(x=>x.nationalityMaleItalian.endsWith("o")))[0];
+    const m0=c.nationalityMaleItalian,st=m0.slice(0,-1);
+    const wrong=pick([st+"e",st+"i",m0+"a",st+"ta",st+"ese",st+"ina"].filter(w=>w!==c.nationalityFemaleItalian),3);
+    return{c,title:"Welche weibliche Form ist korrekt?",big:"👦 "+m0,opts:shuffle([c.nationalityFemaleItalian,...wrong]).map(t=>({t,ok:t===c.nationalityFemaleItalian}))};
+  }
+  c=C[Math.floor(Math.random()*C.length)];o=pick(others(c),3);
+  if(m==="q1")return{c,title:"Come si chiama una persona di questo paese?",big:`${c.flag} ${c.countryItalian}`,
+    opts:shuffle([c,...o]).map(x=>({t:x.nationalityMaleItalian,ok:x===c}))};
+  if(m==="q2")return{c,title:`Welche Nationalität gehört zu ${c.countryItalian}?`,big:c.flag,
+    opts:shuffle([c,...o]).map(x=>({t:x.nationalityMaleItalian,ok:x===c}))};
+  if(m==="q3")return{c,title:`Welche Flagge gehört zu ${c.countryItalian}?`,big:"",
+    opts:shuffle([c,...o]).map(x=>({t:x.flag,ok:x===c,big:1}))};
+  if(m==="pick3"){                                   // zufällig männliche oder weibliche Form
+    const fem=Math.random()<.5,k=fem?"nationalityFemaleItalian":"nationalityMaleItalian";
+    const w=pick(C.filter(x=>x.id!==c.id&&x[k]!==c[k]),2);
+    return{c,title:`Welche ${fem?"weibliche 👧":"männliche 👦"} Nationalität passt zu ${c.countryItalian} (${c.countryGerman})?`,big:`${c.flag} ${c.countryItalian}`,
+      opts:shuffle([c,...w]).map(x=>({t:x[k],ok:x===c}))};
+  }
+  if(m==="flags")return{c,title:"Welche Nation ist das?",big:c.flag,
+    opts:shuffle([c,...o]).map(x=>({t:x.countryItalian,ok:x===c}))};
+  return{c,title:"✍️ Allenatore delle nazionalità",big:`${c.flag} ${c.countryItalian}`,type:true,sub:"Scrivi la nazionalità (maschile o femminile):"};
+}
+/* ---- Zuordnen: Land <-> Nationalität (je 5 Paare pro Runde) ---- */
+function matchRound(){
+  if(mode!=="match")return;
+  const seen=new Set(),set=shuffle(C).filter(c=>!seen.has(c.nationalityMaleItalian)&&seen.add(c.nationalityMaleItalian)).slice(0,5);
+  const p=$("play");let sel=null,done=0;
+  p.innerHTML=`<div class="row" style="align-items:center"><b style="text-align:left">🔗 Abbina paese e nazionalità</b><button id="x" style="flex:0 0 auto">✖ Chiudi</button></div>
+    <h3 style="font-size:1.2rem">Finde zu jedem Land die passende Nationalität: erst links, dann rechts tippen.</h3>
+    <div class="match"><div style="display:grid;gap:10px">${set.map(c=>`<button data-id="${c.id}" data-side="l">${c.flag} ${c.countryItalian}<br><small>${c.countryGerman}</small></button>`).join("")}</div>
+    <div style="display:grid;gap:10px">${shuffle(set).map(c=>`<button data-id="${c.id}" data-side="r" style="min-height:64px">${c.nationalityMaleItalian}</button>`).join("")}</div></div><div class="fb" id="fb"></div>`;
+  $("x").onclick=()=>{p.style.display="none";mode=null;};
+  const L=[...p.querySelectorAll('[data-side=l]')],R=[...p.querySelectorAll('[data-side=r]')];
+  L.forEach(b=>b.onclick=()=>{if(b.classList.contains("ok"))return;L.forEach(x=>x.classList.remove("sel"));b.classList.add("sel");sel=b;});
+  R.forEach(b=>b.onclick=()=>{
+    if(!sel||b.classList.contains("ok"))return;S.played++;
+    if(sel.dataset.id===b.dataset.id){
+      sel.classList.remove("sel");sel.classList.add("ok");b.classList.add("ok");sel=null;done++;
+      $("fb").innerHTML="✅ Bravo! +10";$("fb").style.color="var(--ok)";
+      award(C[b.dataset.id],()=>{});
+      if(done===5)setTimeout(()=>{$("fb").innerHTML="🎉 Perfetto! Tutti abbinati!";setTimeout(matchRound,1800);},900);
+    }else{
+      S.streak=0;refresh();const a=sel;a.classList.remove("sel");a.classList.add("ko");b.classList.add("ko");sel=null;
+      $("fb").innerHTML="❌ Ritenta!";$("fb").style.color="var(--ko)";
+      setTimeout(()=>{a.classList.remove("ko");b.classList.remove("ko");},500);
+    }
+  });
+}
+function nextQ(){
+  if(mode==="match")return matchRound();
+  locked=false;const q=makeQ(mode),p=$("play");
+  const head={pick3:"🎯 Quale nazionalità?",quiz:"🎮 Quiz",flags:"🎯 Cacciatore di bandiere",trainer:"✍️ Allenatore delle nazionalità",gender:"👦 👧 Femminile o Maschile"}[mode];
+  let body;
+  if(q.type)body=`<p>${q.sub}</p><div class="row"><input id="ans" autocomplete="off" autocapitalize="off" placeholder="tedesco / tedesca…"><button id="chk" style="flex:0 0 auto">Controlla ✔</button></div>`;
+  else body=`<div class="opts">${q.opts.map((o,i)=>`<button data-i="${i}" ${o.big?'style="font-size:3rem"':""}>${o.t}</button>`).join("")}</div>`;
+  p.innerHTML=`<div class="row" style="align-items:center"><b style="text-align:left">${head}</b><button id="x" style="flex:0 0 auto">✖ Chiudi</button></div>
+    ${q.big?`<div class="${q.big.length<6?"flagbig":""}"><h3>${q.big}</h3></div>`:""}<h3 style="font-size:1.2rem">${q.title}</h3>${body}<div class="fb" id="fb"></div>`;
+  $("x").onclick=()=>{p.style.display="none";mode=null;};
+  const answer=(ok,btn)=>{
+    if(locked)return;locked=true;S.played++;
+    if(btn)btn.classList.add(ok?"ok":"ko");
+    if(!ok&&!q.type)[...p.querySelectorAll(".opts button")].forEach((b,i)=>q.opts[i].ok&&b.classList.add("ok"));
+    $("fb").innerHTML=ok?"✅ "+(q.type?"Perfetto!":"Bravo!")+" +10":"❌ "+(q.type?"Prova ancora!":"Ritenta!")+(q.type?"":` <small>(${q.c.countryItalian}: ${q.c.nationalityMaleItalian}/${q.c.nationalityFemaleItalian})</small>`);
+    $("fb").style.color=ok?"var(--ok)":"var(--ko)";
+    if(ok)award(q.c,nextQ);else{S.streak=0;refresh();setTimeout(nextQ,q.type?1800:2000);}
+  };
+  if(q.type){
+    const check=()=>{const v=norm($("ans").value);answer(v===norm(q.c.nationalityMaleItalian)||v===norm(q.c.nationalityFemaleItalian));};
+    $("chk").onclick=check;$("ans").onkeydown=e=>{if(e.key==="Enter")check();};$("ans").focus();
+  }else p.querySelectorAll(".opts button").forEach(b=>b.onclick=()=>answer(q.opts[b.dataset.i].ok,b));
+}
+
+/* ============================================================
+   EVENTS & START
+   ============================================================ */
+document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;$("play").style.display="block";nextQ();$("play").scrollIntoView({behavior:"smooth",block:"center"});});
+$("grid").onclick=e=>{const c=e.target.closest(".card");if(c)c.classList.toggle("flipped");};
+$("q").oninput=renderGrid;$("f").onchange=renderGrid;
+$("reset").onclick=()=>{if(confirm("Ricominciare da zero? / Alles zurücksetzen?")){S={owned:[],pts:0,played:0,streak:0,badges:[]};refresh();}};
+/* Navigation: Kacheln Suche / Quiz / Lernen */
+function show(sec){
+  document.querySelectorAll(".sec").forEach(e=>e.classList.add("hide"));
+  $("home").classList.toggle("hide",!!sec);
+  if(sec)$("s-"+sec).classList.remove("hide");
+  $("play").style.display="none";mode=null;
+}
+document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>show(b.dataset.s));
+/* Tageskarte: bei jedem Laden zufällig */
+const d=C[Math.floor(Math.random()*C.length)];
+$("daily").innerHTML=cardHTML(d);$("daily").firstChild.onclick=e=>e.currentTarget.classList.toggle("flipped");
+refresh();
+</script>
+</body>
+</html>
